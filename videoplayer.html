@@ -1,0 +1,45 @@
+<html>
+    <style>
+        video::cue{
+            background: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 10);
+        }
+    </style>
+    <body>
+        <center><h1>If loading takes too long, try reloading the page. If that doesn't work, maybe the chapter doesn't exist</h1></center>
+        <center><a id="previous">Previous</a> ----- <a id="next">Next</a></center>
+        <center><video controls name="media" id="video">
+            <!-- <video controls autoplay name="media" id="video"> -->
+                <track id="subtitles" kind="subtitles" srclang="en" label="English" default>
+        </video></center>
+        <script>
+            document.getElementById("next").setAttribute("href",document.URL.substring(0,document.URL.length-1)+(parseInt(document.URL[document.URL.length-1])+1))
+            document.getElementById("previous").setAttribute("href",document.URL.substring(0,document.URL.length-1)+(parseInt(document.URL[document.URL.length-1])-1))
+            fetch("--replace here")
+            .then(async resp => {
+                
+                let videoBytes = await resp.arrayBuffer();
+                let blob = new Blob([videoBytes],{type:"video/mp4"});
+                let videoURL = URL.createObjectURL(blob);
+                let video = document.getElementById("video");
+                video.setAttribute("src",videoURL);
+                video.setAttribute("preload","auto")
+                video.load();
+                await video.requestFullscreen()
+            }).catch(err => {
+                console.error(err)
+            });
+            fetch("--replace subtitles here")
+            .then(async resp => {
+                let subtitleText = await resp.text();
+                let track = document.getElementById("subtitles");
+                let subtitleBlob = new Blob([subtitleText],{type:"text/vtt"});
+                let subtitleURL = URL.createObjectURL(subtitleBlob);
+                track.setAttribute("src",subtitleURL);
+            })
+            .catch(err => {
+                console.error(err)
+            })
+        </script>
+    </body>
+</html>
