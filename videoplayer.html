@@ -6,11 +6,12 @@
         }
     </style>
     <body>
-        <center><h1>If loading takes too long, try reloading the page. If that doesn't work, maybe the chapter doesn't exist</h1></center>
+        <center id="yes"><h1>If loading takes too long, try reloading the page. If that doesn't work, maybe the chapter doesn't exist</h1></center>
         <center><a id="previous">Previous</a> ----- <a id="next">Next</a></center>
         <center><video controls name="media" id="video">
             <!-- <video controls autoplay name="media" id="video"> -->
-                <track id="subtitles" kind="subtitles" srclang="en" label="English" default>
+                <track id="ensubtitles" kind="subtitles" srclang="en" label="English" default>
+                <track id="essubtitles" kind="subtitles" srclang="es" label="Spanish" default>
         </video></center>
         <script>
             document.getElementById("next").setAttribute("href",document.URL.substring(0,document.URL.length-1)+(parseInt(document.URL[document.URL.length-1])+1))
@@ -29,10 +30,28 @@
             }).catch(err => {
                 console.error(err)
             });
-            fetch("--replace subtitles here")
+            fetch("--replace es subtitles here")
+            .then(async resp => {
+                let track = document.getElementById("essubtitles");
+                if (resp.status == 404){
+                    track.remove();
+                    return;
+                }
+                let subtitleText = await resp.text();
+                let subtitleBlob = new Blob([subtitleText],{type:"text/vtt"});
+                let subtitleURL = URL.createObjectURL(subtitleBlob);
+                track.setAttribute("src",subtitleURL);
+                let yes = document.createElement("h1");
+                yes.textContent = "This video has Spanish subtitles!";
+                document.getElementById("yes").appendChild(yes);
+            })
+            .catch(err => {
+                console.error(err)
+            })
+            fetch("--replace en subtitles here")
             .then(async resp => {
                 let subtitleText = await resp.text();
-                let track = document.getElementById("subtitles");
+                let track = document.getElementById("ensubtitles");
                 let subtitleBlob = new Blob([subtitleText],{type:"text/vtt"});
                 let subtitleURL = URL.createObjectURL(subtitleBlob);
                 track.setAttribute("src",subtitleURL);

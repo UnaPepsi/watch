@@ -84,7 +84,8 @@ func main() {
 		}
 		fmt.Print(r.Host)
 		html := strings.Replace(string(file), "--replace here", fmt.Sprintf("http://%v/api/series/%v/chapter-%v", r.Host, series, chapter), 1)
-		html = strings.Replace(html, "--replace subtitles here", fmt.Sprintf("http://%v/api/series/%v/chapter-%v/captions", r.Host, series, chapter), 1)
+		html = strings.Replace(html, "--replace es subtitles here", fmt.Sprintf("http://%v/api/series/%v/chapter-%v/captions?lang=spa", r.Host, series, chapter), 1)
+		html = strings.Replace(html, "--replace en subtitles here", fmt.Sprintf("http://%v/api/series/%v/chapter-%v/captions", r.Host, series, chapter), 1)
 		fmt.Fprint(w, html)
 	})
 
@@ -121,14 +122,22 @@ func main() {
 		}
 		fmt.Println(entries[chapter-1].Name())
 		videoPath := fmt.Sprintf("./series/%v/%v", series, entries[chapter-1].Name())
-		cmd := exec.Command("ffmpeg", "-i", videoPath, "-map", "0:s:0", "-f", "srt", "-")
+		language := r.URL.Query().Get("lang")
+		var langFormat string
+		if language != "" {
+			langFormat = "0:s:m:language:" + language
+		} else {
+			langFormat = "0:s:0" //1st lang
+		}
+		cmd := exec.Command("ffmpeg", "-i", videoPath, "-map", langFormat, "-f", "srt", "-")
 		var stdout bytes.Buffer
 		cmd.Stdout = &stdout
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
 		err = cmd.Run()
 		if err != nil {
-			fmt.Print("error:", err, stderr.String())
+			// fmt.Print("error:", err, stderr.String()) // idc if it cant find captions
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		subtitles := stdout.String()
